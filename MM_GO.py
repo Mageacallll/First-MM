@@ -7,7 +7,6 @@ from anim import bvh
 import sys
 
 # Load all BVH files and extract features
-features = []
 # anim = []
 # for file in os.listdir("data"):
 #     if file.endswith(".bvh"):
@@ -15,14 +14,17 @@ features = []
 #         features.extend(extract_features(anim))
 
 anim = bvh.load("data/dance1_subject2.bvh")
-features.extend(extract_features(anim))
+features = extract_features(anim)
 # Initialize and fit the KNN model
 knn_model = KNNModel()
-knn_model.fit(features)
+# Reshape features from (3945, 22, 15) to (3945, 22*15)
+features_2d = features.reshape(features.shape[0], -1)
+
+# Fit the model
+knn_model.fit(features_2d)
 
 # Main game loop
 for i in range(len(anim)):
-    print("Do I get into the loop?")
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -46,7 +48,8 @@ for i in range(len(anim)):
 
             if control_signal is not None:
                 # Find the most similar frame using the KNN model
-                similar_frame_idx = knn_model.find_similar_frame(features[i], control_signal)
+                similar_frame_idx = knn_model.find_similar_frame(features_2d[i], control_signal)
+                print("how does it look like here?", similar_frame_idx)
                 # Update the current frame with the most similar frame
                 anim.positions[i] = anim.positions[similar_frame_idx]
 

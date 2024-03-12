@@ -30,19 +30,35 @@ def extract_features(anim):
     num_frames = len(anim)
     num_joints = len(anim.skel.joints)
 
-    # Extract the first two columns of the first three rows in local transform for all frames and joints
-    joint_features = anim.local_transform[:num_frames, :num_joints, :3, :2].reshape(num_frames, num_joints, -1)
-
     # Compute the AB^(-1) matrix for all frames and joints
-    current_transform = np.hstack((anim.local_transform[:num_frames, :num_joints, :3, :2], anim.local_transform[:num_frames, :num_joints, :3, 3:4]))
+    print("shape of the local_transform:", anim.local_transform.shape)
+    current_transform = anim.local_transform[:num_frames, :num_joints, :4, :4]
     next_transform = np.roll(current_transform, -1, axis=0)
     next_transform[-1] = current_transform[-1]  # Use the same transform for the last frame
-    ab_inv = np.matmul(current_transform, np.linalg.inv(next_transform)).reshape(num_frames, num_joints, -1)
+    ab_inv = np.matmul(current_transform, np.linalg.inv(next_transform))
+    print("shape of AB^(-1) matrix:", ab_inv.shape)
+    # Assume placeholder is your example matrix
+    placeholder = np.array([[1,1,0,1],
+                            [1,1,0,1],
+                            [1,1,0,1],
+                            [0,0,0,0]])
 
-    # Combine the joint features and the AB^(-1) matrix
-    features = np.hstack((joint_features, ab_inv))
+    joint_features = anim.local_transform[:num_frames, :num_joints, :3, :2].reshape(num_frames, num_joints, -1)
 
-    return features.tolist()
+    # Create a mask from the placeholder
+    mask = np.repeat(placeholder[np.newaxis, np.newaxis, :, :], ab_inv.shape[0], axis=0)
+    mask = np.repeat(mask, ab_inv.shape[1], axis=1)
+
+    # Apply the mask to ab_inv
+    selected_elements = ab_inv[mask == 1]
+
+    # Reshape selected_elements to have shape (3945, 22, 9)
+    selected_elements = selected_elements.reshape(ab_inv.shape[0], ab_inv.shape[1], -1)
+
+    # Concatenate joint_features and selected_elements along the last axis
+    final_array = np.concatenate([joint_features, selected_elements], axis=-1)
+
+    return final_array
 
 # KNN Model
 class KNNModel:
