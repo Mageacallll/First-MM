@@ -62,7 +62,7 @@ def extract_features(anim):
 
 # KNN Model
 class KNNModel:
-    def __init__(self, k=1):
+    def __init__(self, k=100):
         self.knn = NearestNeighbors(n_neighbors=k)
 
     def fit(self, X):
@@ -74,4 +74,4 @@ class KNNModel:
             current_frame[i+6:i+15] += control_signal.flatten()
         # Find the most similar frame to the current (adjusted) frame
         distances, indices = self.knn.kneighbors([current_frame])
-        return indices[0][0]
+        return indices[0][1]

@@ -23,8 +23,43 @@ features_2d = features.reshape(features.shape[0], -1)
 # Fit the model
 knn_model.fit(features_2d)
 
+# # Main game loop
+# for i in range(len(anim)):
+#     for event in pygame.event.get():
+#         if event.type == pygame.QUIT:
+#             pygame.quit()
+#             sys.exit()
+#         elif event.type == pygame.KEYDOWN:
+#             control_signal = None
+#             if event.key == pygame.K_RIGHT:
+#                 # User input for "turn right"
+#                 control_signal = np.array([[10000, 0, 10000], [0, 10000, 10000], [0, 0, 0]])
+#             elif event.key == pygame.K_LEFT:
+#                 # User input for "turn left"
+#                 control_signal = np.array([[10000, 0, -10000], [0, 10000, -10000], [0, 0, 0]])
+#             elif event.key == pygame.K_UP:
+#                 # User input for "move forward"
+#                 control_signal = np.array([[10000, 10000, 0], [10000, 10000, 0], [0, 0, 0]])
+#             elif event.key == pygame.K_DOWN:
+#                 # User input for "move backward"
+#                 control_signal = np.array([[-10000, -10000, 0], [-10000, -10000, 0], [0, 0, 0]])
+#             else:
+#                 control_signal = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+#             if control_signal is not None:
+#                 # Find the most similar frame using the KNN model
+#                 similar_frame_idx = knn_model.find_similar_frame(features_2d[i], control_signal)
+#                 print("how does it look like here?", similar_frame_idx)
+#                 # Update the current frame with the most similar frame
+#                 anim.positions[i] = anim.positions[similar_frame_idx]
+
+
+# Initialize the current frame to the first frame
+current_frame = features_2d[0]
+current_index = 0
+
 # Main game loop
-for i in range(len(anim)):
+while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -33,31 +68,30 @@ for i in range(len(anim)):
             control_signal = None
             if event.key == pygame.K_RIGHT:
                 # User input for "turn right"
-                control_signal = np.array([[1, 0, 1], [0, 1, 1], [0, 0, 0]])
+                control_signal = np.array([[10000, 0, 10000], [0, 10000, 10000], [0, 0, 0]])
             elif event.key == pygame.K_LEFT:
                 # User input for "turn left"
-                control_signal = np.array([[1, 0, -1], [0, 1, -1], [0, 0, 0]])
+                control_signal = np.array([[-10000, 0, -10000], [0, -10000, -10000], [0, 0, 0]])
             elif event.key == pygame.K_UP:
                 # User input for "move forward"
-                control_signal = np.array([[1, 1, 0], [1, 1, 0], [0, 0, 0]])
+                control_signal = np.array([[10000, 10000, 0], [10000, 10000, 0], [0, 0, 0]])
             elif event.key == pygame.K_DOWN:
                 # User input for "move backward"
-                control_signal = np.array([[-1, -1, 0], [-1, -1, 0], [0, 0, 0]])
-            else:
-                control_signal = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+                control_signal = np.array([[-10000, -10000, 0], [-10000, -10000, 0], [0, 0, 0]])
 
             if control_signal is not None:
-                # Find the most similar frame using the KNN model
-                similar_frame_idx = knn_model.find_similar_frame(features_2d[i], control_signal)
-                print("how does it look like here?", similar_frame_idx)
-                # Update the current frame with the most similar frame
-                anim.positions[i] = anim.positions[similar_frame_idx]
-
+                # Find the most similar frame to the current frame adjusted by the control signal
+                similar_frame_idx = knn_model.find_similar_frame(current_frame, control_signal)
+                # Update the current frame to the most similar frame
+                print("what do we get from the prediction result?", similar_frame_idx)
+                current_frame = features_2d[similar_frame_idx]
+                current_index = similar_frame_idx
+                
     ## Clear the window
     window.fill((0, 0, 0))
 
     # Get the positions of the joints for this frame
-    positions = project_3d_to_2d(anim.positions[i])
+    positions = project_3d_to_2d(anim.positions[current_index])
 
     # Draw each joint
     for position in positions:
